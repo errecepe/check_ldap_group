@@ -17,3 +17,7 @@ Where:
 For example the command:
 ./check_ldap_group 100 200 1.2.3.4 389 "CN=LDAPUSER,OU=USER,DC=DOMAIN,DC=LOCAL" LDAPUSER_PASS "CN=LDAP_GROUP,OU=GROUPS,DC=DOMAIN,DC=LOCAL" "LDAP_GROUP" 1500
 Will check group LDAP_GROUP on 1.2.3.4:389 LDAP SERVER, validating with LDAPUSER/LDAPUSER_PASS with a warning=100 and critical=200 values
+
+requires ldap-utils
+install with: sudo apt install ldap-utils
+
