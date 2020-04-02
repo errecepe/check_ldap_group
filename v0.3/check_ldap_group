@@ -1,0 +1,54 @@
+#! /bin/sh
+#  (C) errecepe@gmail.com 2020
+#
+#./check_ldap_group 100 200 1.2.3.4 389 "CN=LDAPUSER,OU=USER,DC=DOMAIN,DC=LOCAL" LDAPUSER_PASS "CN=LDAP_GROUP,OU=GROUPS,DC=DOMAIN,DC=LOCAL" "LDAP_GROUP" 1500
+#
+
+PROGNAME=`basename $0`
+PROGPATH=`echo $0 | sed -e 's,[\\/][^\\/][^\\/]*$,,'`
+REVISION="3.0.0"
+
+print_usage() {
+  echo "Usage:"
+  echo "  $PROGNAME WARNING CRITICAL HOST PORT LDAP_USER_CN LDAP_PASS GROUP_CN GROUP_NAME MAXRANGE"
+}
+
+if [ "$#" -lt "9" ]
+   then
+     echo "Este script necesita 9 parametros para funcionar"
+     print_usage
+     exit 3
+fi
+
+VARSHELL="/usr/bin/ldapsearch -o ldif-wrap=no -LLL -x -h $3:$4 -D '$5' -w $6 -b '$7' 'cn=$8' 'member'|grep 'member'|wc -l"
+RESULT=($(eval $VARSHELL))
+
+CONT=1
+PAGE=$(bc -l<<<"$CONT*$9")
+
+while [ $RESULT -eq  $PAGE ];
+do
+        VARSHELL2="/usr/bin/ldapsearch -o ldif-wrap=no -LLL -x -h $3:$4 -D '$5' -w $6 -b '$7' 'cn=$8' 'member;range=$PAGE-*'|grep 'member'|wc -l"
+        RESULT2=($(eval $VARSHELL2))
+        RESULT=$(($RESULT + $RESULT2))
+        CONT=$(($CONT+1))
+        PAGE=$(bc -l<<<"$CONT*$9")
+done
+
+if [ "$RESULT" -lt "$1" ]
+then
+        echo "OK - $RESULT Usuarios|Usuarios=$RESULT;"
+        exit 0
+fi
+
+if [ "$RESULT" -gt "$1" ]|[ "$RESULT" -lt "$2" ]
+then
+        echo "CRITICAL - $RESULT Usuarios|Usuarios=$RESULT;"
+        exit 1
+fi
+
+if [ "$RESULT" -gt "$2" ]
+then
+      echo "CRITICAL - $RESULT Usuarios|Usuarios=$RESULT;"
+      exit 2
+fi
